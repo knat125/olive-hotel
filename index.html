@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	<meta charset="UTF-8">
+	<title>Olive Hotel</title>
+	<link rel='stylesheet' href='css/style.css'>
+	<script src='js/lodash.js'></script>
+	<link rel='shortcut icon' href='images/favicon.png' type='image/png'>
+	<script src='http://maps.googleapis.com/maps/api/js'></script>
+	<script src='js/addMap.js'></script>
+	<script type='text/template' data-name='Rooms'>
+		<div class='container clearfix'>
+			<% allRooms.forEach(function(room, i) { %>
+				<div class='col-4 col-l-6 col-m-12'>
+					<div class='imgWrapper'>
+						<img src='images/<%= room.places %>-<%= room.rooms %>-<%= room.price %>.jpg'>
+						<p><%= room.price %> грн/<span class='smallerLetters'>доба</span></p>
+					</div>
+					<div class='textWrapper'>
+						<div>
+							<p><i class='fa fa-building' aria-hidden='true'></i> Кімнат:
+								<%= room.rooms %></p>
+								<p><i class='fa fa-bed' aria-hidden='true'></i> Спальних місць: <%= room.places %></p>
+							</div>
+							<div>
+								<p><i class='fa fa-star' aria-hidden='true'></i> <%= room.title %></p>
+								<p><i class='fa fa-ellipsis-v' aria-hidden='true'></i>   Поверх: <%= room.floor %></p>
+								<input type='button' data-room='<%= room.places %>-<%= room.rooms %>-<%= room.price %>' onclick='getCertainCalendarCheckin(this)' onClick='getCertainCalendarCheckin(this)' value='Забронювати'></input>
+							</div>
+						</div>
+					</div>
+					<% }); %>
+		</div>
+	</script>
+
+	<script>
+		window.Templates = (function() {
+			var templateElements = document.querySelectorAll('script[type="text/template"]');
+			var compiledTemplates = {};
+
+			Array.prototype.forEach.call(templateElements, function(templateElement) {
+				var templateName = templateElement.getAttribute('data-name');
+				var templateString = templateElement.innerHTML;
+
+				compiledTemplates[templateName] = _.template(templateString);
+			});
+
+			return compiledTemplates;
+		})();
+	</script>
+</head>
+<body>
+	<div id='popup'>
+		<div id='closePopup' onclick='document.getElementById("popup").style.display = "none";'><i class='fa fa-times' aria-hidden='false'></i></div>
+		<h2>Заброньовано успішно!</h2>
+		<p>Дякуємо за довіру до нашого готелю. Вам потрібен номер на <span id='peopleNumber'></span> терміном із <span id='checkinNumber'></span> по <span id='checkoutNumber'></span>. Наш менеджер зв'яжеться з Вами упродовж півгодини за телефоном <span id='phoneNumber'></span> і запропонує найкращі варіанти.</p>
+	</div>
+	<div id='calendars'>
+		<div id='calendarsWrapper' class='clearfix'>
+			<div id='close' onclick='document.getElementById("calendars").style.display = "none";'><i class='fa fa-times' aria-hidden='false'></i></div>
+			<h2>Дата заїзду</h2><h2>Дата виїзду</h2>
+			<h3>Дати заїзду і виїзду</h3>
+			<table id='certainCalendarCheckin'>
+				<thead>
+					<tr>
+						<td>‹</td>
+						<td colspan='5'></td>
+						<td>›</td>
+					</tr>
+					<tr>
+						<td>Пн</td>
+						<td>Вт</td>
+						<td>Ср</td>
+						<td>Чт</td>
+						<td>Пт</td>
+						<td>Сб</td>
+						<td>Нд</td>
+					</tr>
+				</thead>
+				<tbody id='certainCalendarCheckinBody'>
+				</tbody>
+			</table>
+			<table id='certainCalendarCheckout'>
+				<thead>
+					<tr>
+						<td>‹</td>
+						<td colspan='5'></td>
+						<td>›</td>
+					</tr>
+					<tr>
+						<td>Пн</td>
+						<td>Вт</td>
+						<td>Ср</td>
+						<td>Чт</td>
+						<td>Пт</td>
+						<td>Сб</td>
+						<td>Нд</td>
+					</tr>
+				</thead>
+				<tbody id='certainCalendarCheckoutBody'>
+				</tbody>
+			</table>
+			<h4>Обрані некоректні дати, спробуйте інші</h4>
+			<input id='book' type='button' onclick='book()' onClick='book()' value='Забронювати'>
+		</div>
+	</div>
+	<div id='header'>
+		<div class='container clearfix'>
+			<div class='col-3 col-s-3'>
+				<div id='logo'>
+					<img id='big' src='images/logo_2.png'>
+					<img id='small' src='images/logo_1.png'>
+				</div>
+			</div>
+			<div class='col-9 col-s-9'>
+				<div id='menu' class='clearfix'>
+					<ul>
+						<li><a href='#'><i class='fa fa-bars' aria-hidden='true'></i></a></li>
+						<li><a href='#menu'>Головна</a></li>
+						<li><a href='#booking'>Забронювати</a></li>
+						<li><a href='#filters'>Номери</a></li>
+						<li><a href='#services'>Наші послуги</a>
+							<ul class='submenu'>
+								<li><a href='#services'>Основні</a></li>
+								<li><a href='#additionalServices'>Додаткові</a></li>
+							</ul>
+						</li>
+						<li><a href='#map'>Контакти</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id='content'>
+		<div id='slider' class='clearfix'>
+			<ul class='clearfix'>
+				<li class='slide shown'><img src='images/slide-1.jpg'></li>
+				<li class='slide'><img src='images/slide-2.jpg'></li>
+				<li class='slide'><img src='images/slide-3.jpg'></li>
+			</ul>
+		</div>
+		<div id='booking'>
+			<div class='container'>
+				<form id='formBooking' class='clearfix' action='' method='post'>
+					<div class='col-12'>
+						<h2>Швидке бронювання</h2>
+					</div>	
+					<div class='col-3 col-l-6 col-s-12'>
+						<h4>Заселення</h4>
+						<input id='checkinInput' pattern='^[0-9]{1,2}\s{1}[а-я]{5,10},\s{1}[0-9]{4}' onfocus='getCalendarCheckin()'>
+						<table id='calendarCheckin'>
+							<thead>
+								<tr>
+									<td>‹</td>
+									<td colspan='5'></td>
+									<td>›</td>
+								</tr>
+								<tr>
+									<td>Пн</td>
+									<td>Вт</td>
+									<td>Ср</td>
+									<td>Чт</td>
+									<td>Пт</td>
+									<td>Сб</td>
+									<td>Нд</td>
+								</tr>
+							</thead>
+							<tbody id='calendarCheckinBody'>
+							</tbody>
+						</table>
+					</div>
+					<div class='col-3 col-l-6 col-s-12'>
+						<h4>Виселення</h4>
+						<input id='checkoutInput' pattern='^[0-9]{1,2}\s{1}[а-я]{5,10},\s{1}[0-9]{4}' onfocus='getCalendarCheckout()'>
+						<table id='calendarCheckout'>
+							<thead>
+								<tr>
+									<td>‹</td>
+									<td colspan='5'></td>
+									<td>›</td>
+								</tr>
+								<tr>
+									<td>Пн</td>
+									<td>Вт</td>
+									<td>Ср</td>
+									<td>Чт</td>
+									<td>Пт</td>
+									<td>Сб</td>
+									<td>Нд</td>
+								</tr>
+							</thead>
+							<tbody id='calendarCheckoutBody'>
+							</tbody>
+						</table> 
+					</div>
+					<div class='col-3 col-l-6 col-s-12'>
+						<h4>Телефон</h4>
+						<input id='phone' type='tel' placeholder='(XXX) XXX XX XX' pattern='(\(?[0-9]{3}\)?)[\s\-_]?[0-9]{3}[\s\-_]?[0-9]{2}[\s\-_]?[0-9]{2}'>
+					</div>
+					<div class='col-1 col-l-2 col-s-12'>
+						<h4>Гостей</h4>
+						<div class='select-wrapper'>
+							<select id='guests' name='guests'>
+								<option value='1'>1</option>
+								<option value='2'>2</option>
+								<option value='3'>3</option>
+								<option value='4'>4</option>
+								<option value='5'>5</option>
+							</select>
+						</div>
+					</div>
+					<div class='col-2 col-l-4 col-s-12'>
+						<input id='submit' type='button' value='Забронювати' onclick='submitForm()' onClick='submitForm()'>
+					</div>
+					<div class='col-12'>
+						<h3 id='error'>Дані введені неправильно! Перевірте, будь ласка, інформацію</h3>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div id='filters'>
+			<div class='container clearfix'>
+				<div class='col-12'>
+					<h1>Знайти номер</h1>
+					<hr>
+				</div>
+				<div class='col-3 col-l-6 col-s-12'>
+					<h4>Спальних місць</h4>
+					<div class='select-wrapper'>
+						<select id='placesSelector' onchange='filterChange(this)' onpropertychange='filterChange(this)'>
+							<option value='all' selected='selected'>Усі</option>
+							<option value='1'>1</option>
+							<option value='2'>2</option>
+							<option value='3'>3</option>
+							<option value='4'>4</option>
+							<option value='5'>5</option>
+						</select>
+					</div>
+				</div>
+				<div class='col-3 col-l-6 col-s-12'>
+					<h4>Кімнат</h4>
+					<div class='select-wrapper'>
+						<select id='roomsSelector' onchange='filterChange(this)' onpropertychange='filterChange(this)'>
+							<option value='all' selected='selected'>Усі</option>
+							<option value='1'>1</option>
+							<option value='2'>2</option>
+							<option value='3'>3</option>
+							<option value='4'>4</option>
+						</select>
+					</div>
+				</div>
+				<div class='col-3 col-l-6 col-s-12'>
+					<h4>Клас</h4>
+					<div class='select-wrapper'>
+						<select id='classTypeSelector' onchange='filterChange(this)' onpropertychange='filterChange(this)'>
+							<option value='all' selected='selected'>Усі</option>
+							<option value='standart'>Стандарт</option>
+							<option value='apartment'>Апартаменти</option>
+							<option value='lux'>LUX</option>
+						</select>
+					</div>
+				</div>
+				<div class='col-3 col-l-6 col-s-12'>
+					<h4>Сортувати</h4>
+					<div class='select-wrapper'>
+						<select id='sort' onchange='sortChange(this)' onpropertychange='filterChange(this)'>
+							<option value='default' selected='selected'>За замовчуванням</option>
+							<option value='placesToTop'>Спальних місць&ensp;&#8595;</option>
+							<option value='placesToBottom'>Спальних місць&ensp;&#8593;</option>
+							<option value='priceToTop'>Вартість&ensp;&#8595;</option>
+							<option value='priceToBottom'>Вартість&ensp;&#8593;</option>
+							<option value='roomsToTop'>Кількість кімнат&ensp;&#8595;</option>
+							<option value='roomsToBottom'>Кількість кімнат&ensp;&#8593;</option>
+						</select>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id='rooms'>
+		</div>
+		<div id='services'>
+			<div class='container clearfix'>
+				<div class='col-12'>
+					<h1>Наші послуги</h1>
+					<h5>Включено у вартість</h5>
+					<hr>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/parking.png'>
+					<h3>Парковка</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/key.png'>
+					<h3>Електронний ключ</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/smartphone-2.png'>
+					<h3>WiFi</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/safebox.png'>
+					<h3>Сейф</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/room-service.png'>
+					<h3>Обслуговування</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/luggage.png'>
+					<h3>Камера схову</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/air-conditioner.png'>
+					<h3>Кондиціонер</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/clothes.png'>
+					<h3>Хімчистка</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/coffee.png'>
+					<h3>Сніданок у номер</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/family-room.png'>
+					<h3>Дитячі ліжка</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/hotel-staff.png'>
+					<h3>Консьєрж</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/laundry-service.png'>
+					<h3>Пральня</h3>
+				</div>
+			</div>
+		</div>
+		<div id='additionalServices'>
+			<div class='container clearfix'>
+				<div class='col-12'>
+					<h1>Додаткові послуги</h1>
+					<hr>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/swimming-pool.png'>
+					<h3>Басейн</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/sport-centre.png'>
+					<h3>Спортзал</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/relax.png'>
+					<h3>СПА</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/taxi.png'>
+					<h3>Таксі</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/bar.png'>
+					<h3>Бар</h3>
+				</div>
+				<div class='col-2 col-l-3 col-s-6'>
+					<img src='images/restaurant.png'>
+					<h3>Ресторан</h3>
+				</div>
+			</div>
+		</div>
+		<div id='map'></div>
+		<div id='footer'>
+			<div class='container clearfix'>
+				<div class='col-4 col-m-12 left'>
+					<p><i class='fa fa-map-marker' aria-hidden='true'></i>&ensp;Місто Київ, вулиця Сошенка, 32</p>
+				</div>
+				<div class='col-4 col-m-12 center'>
+					<p><i class='fa fa-phone' aria-hidden='true'></i>&ensp;(093) 254 24 53</p>
+				</div>
+				<div class='col-4 col-m-12 right'>
+					<a href='https://www.facebook.com/sharer/sharer.php?u=example.org' target='_blank'><i class='fa fa-facebook' aria-hidden='true'></i></a>&ensp;&ensp;&ensp;<a href='http://www.twitter.com/share?' target='_blank'><i class='fa fa-twitter' aria-hidden='true'></i></a>&ensp;&ensp;&ensp;<a href='http://vkontakte.ru/share.php?' target='_blank'><i class='fa fa-vk' aria-hidden='true'></i></a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src='js/slider.js'></script>
+	<script src='js/addingRooms.js'></script>
+	<script src='js/calendar.js'></script>
+</body>
+</html>
